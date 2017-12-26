@@ -1,0 +1,48 @@
+
+0x0 = 4D 50 54 30 = "MPT0" // Cabecalho
+0x04 = Tamanho do bloco
+Comprimento do bloco de dialogos = 0x0C - 0x08
+0x10 = quantidade de diálogos
+0x14 = espaço, aparece em todos os blocos de diálogo
+0x18 = bytes dos ponteiros  
+Soma do 0x14 mais 0x18 = offset do primeiro diálogo
+0x1C = Quantidade de bytes utilizados para escrever os textos
+0x20 = Primeiro ponteiro
+
+Primeiro ponteiro está na ordem de cima para baixo, assim como os textos, depois disso, 
+indentifiquei também que só um número corresponde aos bytes que aquele texto usa. 
+
+        $BlocoDosDialogos = substr($bin, $start,$length);
+        
+        $qtddialogs= substr($BlocoDosDialogos, 4, 4);
+        $qtddialogs= bin32ToDec($qtddialogs);
+        
+        $offsets = array();
+       
+        //Ler ponteiros
+        for ($i=0;$i<$qtddialogs; $i++){
+            $offset = substr($BlocoDosDialogos, 8 +(4*$i),4);
+            $offset = bin32ToDec($offset);
+            //para guardar os ponteiros
+            $offsets[$i]=$offset;
+        }
+        
+        $dialogos = array();
+        $valorBase =( 32 + ($qtddialogs *4));
+        // Ler dialogos
+        for ($i=0;$i<$qtddialogs; $i++){
+            if ($i<($qtddialogs-1)){
+            $dialogo = substr($BlocoDosDialogos, $valorBase +$offsets[$i]);
+        }else{
+             $dialogo = substr($BlocoDosDialogos, $valorBase +$offsets[$i], $offsets[$i+1]-$offset[$i]);
+        }
+        // para guardar os dialogos
+        $dialogos[$i] = $dialogo;
+        }
+   
+        for ($i=0;$i<$qtddialogs; $i++){
+            $txt.= "//$i\n";
+            $txt.= "//$dialogo[$i]\n";
+        }
+        return $txt;
+    }
